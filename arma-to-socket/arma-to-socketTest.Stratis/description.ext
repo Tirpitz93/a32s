@@ -1,0 +1,32 @@
+OnLoadName = "plugin test";
+Author = "Lönja 'Tirpitz' Selter";
+OnLoadMission = "plugin test";
+
+disabledAI = 1;
+enableDebugConsole = 1;
+allowFunctionsRecompile = 1;
+Respawn = 2;
+RespawnDelay = 2;
+
+class Header
+{
+	gameType=COOP;
+	minPlayers=1;
+	maxPlayers=12;
+};
+
+class CfgFunctions
+{
+	#include "functions.h"
+};
+
+class Params { 
+		// 0 - Time Of Day
+		class tirp_debug { 
+			title="Debug"; 
+			values[]={1, 1}; 
+			texts[]={"On", "Off" }; 
+			default=0; 
+		};
+		
+};
