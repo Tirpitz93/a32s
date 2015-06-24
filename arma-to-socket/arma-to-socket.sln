@@ -5,8 +5,6 @@ VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "arma-to-socket", "arma-to-socket\arma-to-socket.vcxproj", "{E976B34A-CEC7-40BB-A2E3-0C9881104F99}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "testApp", "testApp\testApp.vcxproj", "{8620790B-1432-473C-90E9-4AE77195595B}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "testdll", "testdll\testdll.vcxproj", "{D5A47F77-B920-45D8-B765-6F1333142C88}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "debugconsole", "debugconsole\debugconsole.vcxproj", "{4E4121C5-C889-4F3F-87B8-15C28EBC6A96}"
@@ -26,10 +24,6 @@ Global
 		{E976B34A-CEC7-40BB-A2E3-0C9881104F99}.Release|Win32.ActiveCfg = Release|Win32
 		{E976B34A-CEC7-40BB-A2E3-0C9881104F99}.Release|Win32.Build.0 = Release|Win32
 		{E976B34A-CEC7-40BB-A2E3-0C9881104F99}.Release|Win32.Deploy.0 = Release|Win32
-		{8620790B-1432-473C-90E9-4AE77195595B}.Debug|Win32.ActiveCfg = Debug|Win32
-		{8620790B-1432-473C-90E9-4AE77195595B}.Debug|Win32.Build.0 = Debug|Win32
-		{8620790B-1432-473C-90E9-4AE77195595B}.Release|Win32.ActiveCfg = Release|Win32
-		{8620790B-1432-473C-90E9-4AE77195595B}.Release|Win32.Build.0 = Release|Win32
 		{D5A47F77-B920-45D8-B765-6F1333142C88}.Debug|Win32.ActiveCfg = Debug|Win32
 		{D5A47F77-B920-45D8-B765-6F1333142C88}.Debug|Win32.Build.0 = Debug|Win32
 		{D5A47F77-B920-45D8-B765-6F1333142C88}.Release|Win32.ActiveCfg = Release|Win32

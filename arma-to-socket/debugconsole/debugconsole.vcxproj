@@ -42,14 +42,16 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)\arma-to-socket\Release\</OutDir>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)\boost_1_58_0;$(SolutionDir)\poco-1.6.0\Net\include;$(SolutionDir)\poco-1.6.0\Foundation\include</IncludePath>
-    <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(SolutionDir)\boost_1_58_0\lib32-msvc-12.0;$(SolutionDir)\poco-1.6.0\lib;</LibraryPath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);G:\local\boost_1_58_0;G:\local\poco-1.6.0\;G:\local\poco-1.6.0\Net\include;G:\local\poco-1.6.0\Foundation\include</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);G:\local\boost_1_58_0\lib32-msvc-12.0;G:\local\poco-1.6.0\lib;</LibraryPath>
+    <LibraryWPath>$(WindowsSDK_MetadataPath);G:\local\boost_1_58_0;G:\local\poco-1.6.0\lib;</LibraryWPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)\arma-to-socket\Release\</OutDir>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)\boost_1_58_0;$(SolutionDir)\poco-1.6.0\Net\include;$(SolutionDir)\poco-1.6.0\Foundation\include</IncludePath>
-    <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(SolutionDir)\boost_1_58_0\lib32-msvc-12.0;$(SolutionDir)\poco-1.6.0\lib;</LibraryPath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);G:\local\boost_1_58_0;G:\local\poco-1.6.0\;G:\local\poco-1.6.0\Net\include;G:\local\poco-1.6.0\Foundation\include</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);G:\local\boost_1_58_0\lib32-msvc-12.0;G:\local\poco-1.6.0\lib;</LibraryPath>
+    <LibraryWPath>$(WindowsSDK_MetadataPath);G:\local\boost_1_58_0;G:\local\poco-1.6.0\lib;</LibraryWPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
