@@ -26,6 +26,7 @@
 #include <Poco/Mutex.h>
 
 #include <Poco/Logger.h>
+#include "tokenizer.h"
 
 using std::endl;
 using std::string;
@@ -74,6 +75,8 @@ char* deliminator = ":";
 int loadOptions(std::string, std::string*, int*, int*);
 std::vector<std::string>& split(const std::string &s, char delim, std::vector<std::string> &elems);
 std::vector<std::string> split(const std::string &s, char delim);
+
+
 std::atomic<bool> worker_working(false);
 long int id = 0; // global ticket id
 long int cur_id = 0;// current ticket id
@@ -130,7 +133,7 @@ void worker() {
 		tcp.insert(pair<string, int>("srecv", 6));
 
 		vector<string> vect;
-		vect = split(input, *A2S_DELIMINATOR);
+		tokenize(input, vect, A2S_DELIMINATOR);
 		//std::transform(vect[1].begin(), vect[1].end(), vect[1].begin(), ::tolower);
 		//try {
 		int length = vect.size();
@@ -423,21 +426,6 @@ int loadOptions(std::string name, std::string* address, int* timeout, int* proto
 	po::store(po::parse_config_file(settings_file, desc, true), vm);
 	settings_file.close();
 	po::notify(vm);
-
-	// Print settings.
-	//typedef std::vector< std::string >::iterator iterator;
-	/*for (plugin_names_t::iterator iterator = plugin_names.begin(),
-		end = plugin_names.end();
-		iterator < end;
-	++iterator)
-	{
-		std::cout << "plugin.name: " << *iterator << std::endl;
-	}*/
-//	std::cout << name << "\n";
-//	std::cout << std::to_string(*protocol) << "\n";
-	//std::cout << port << "\n";
-//	std::cout << *address << "\n";
-//	std::cout << *timeout << "\n";
 	return 0;
 
 };
