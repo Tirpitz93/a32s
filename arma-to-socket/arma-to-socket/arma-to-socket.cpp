@@ -80,6 +80,7 @@ std::vector<std::string> split(const std::string &s, char delim);
 std::atomic<bool> worker_working(false);
 long int id = 0; // global ticket id
 long int cur_id = 0;// current ticket id
+void worker();
 std::string newSocket(std::vector<std::string>&);
 std::string TCPSend(std::vector<std::string>&);
 std::string TCPRecv(std::vector<std::string>&);
@@ -94,6 +95,85 @@ std::string UDPClose(std::vector<std::string>&);
 int maxLen;
 
 extern "C" { __declspec (dllexport) void __stdcall RVExtension(char *output, int outputSize, const char *function); }
+void __stdcall RVExtension(char *output, int outputSize, const char *function)
+{
+	maxLen = outputSize;
+	std::string str(function);
+	std::string v = "version";
+	std::string av = "APIVersion";
+	std::string ol = "maxLength";
+	if (str == v){
+		strncpy_s(output, outputSize, A2S_VERSION, _TRUNCATE);
+		return;
+	}
+	else if (str == av){
+		strncpy_s(output, outputSize, A2S_API_VERSION, _TRUNCATE);
+		return;
+
+	}
+	else if (str == ol){
+
+		strncpy_s(output, outputSize, std::to_string(outputSize).c_str(), _TRUNCATE);
+		return;
+
+	}
+
+
+	if (!strncmp(function, "r:", 2)) // detect checking for result
+	{
+		long int num = atol(&function[2]); // ticket number or 0
+		if (tickets.find(num) != tickets.end()) // ticket exists
+		{
+			mtx.lock();
+			if (tickets[num].ready) // result is ready
+			{
+				std::string header;
+				if (!tickets[num].isLong){
+					header = "0:";
+					std::string rtn = header + tickets[num].result;
+					strncpy_s(output, outputSize, (rtn.c_str()), _TRUNCATE);// result
+					tickets.erase(num); // get rid of the read ticket
+
+				}
+				else
+				{
+					header = "1:" +
+						std::to_string(tickets[num].PacketCount) + A2S_DELIMINATOR +
+						std::to_string(tickets[num].lastSent + 2) + A2S_DELIMINATOR;
+					std::string rtn = header + tickets[num].resultsArray[tickets[num].lastSent + 1].c_str();
+					strncpy_s(output, outputSize, rtn.c_str(), _TRUNCATE);// result
+					tickets[num].lastSent++;
+					if (tickets[num].lastSent >= (tickets[num].PacketCount - 1)){
+						tickets.erase(num); // get rid of the read ticket
+
+					}
+				}
+				mtx.unlock();
+				return;
+			}
+			mtx.unlock();
+			strncpy_s(output, outputSize, "WAIT", _TRUNCATE);    // result is not ready
+			return;
+		}
+		strncpy_s(output, outputSize, "EMPTY", _TRUNCATE); // no such ticket
+	}
+	else if (!strncmp(function, "s:", 2)) // detect ticket submission
+	{
+		Data data; data.params = string(&function[2]); // extract params
+		mtx.lock(); tickets.insert(pair<long int, Data>(++id, data)); // add ticket to the queue
+		mtx.unlock(); if (!worker_working) // if worker thread is finished, start another one
+		{
+			worker_working = true;
+			std::thread worker(worker);
+			worker.detach(); // start parallel process
+		}
+		strncpy_s(output, outputSize, std::to_string(id).c_str(), _TRUNCATE); // ticket number
+	}
+	else
+	{
+		strncpy_s(output, outputSize, "INVALID COMMAND", _TRUNCATE); // other input
+	}
+}
 
 void worker() {
 	while (worker_working = id > cur_id) // next ticket exists?
@@ -109,8 +189,9 @@ void worker() {
 		std::map < std::string, int > systemCalls;
 		systemCalls.insert(pair<string, int>("version", 1));
 		systemCalls.insert(pair<string, int>("APIVersion", 2));
-		systemCalls.insert(pair<string, int>("tcp", 3));
-		systemCalls.insert(pair<string, int>("udp", 4));
+		systemCalls.insert(pair<string, int>("maxlength", 3));
+		systemCalls.insert(pair<string, int>("tcp", 13));
+		systemCalls.insert(pair<string, int>("udp", 14));
 
 		std::map < std::string, int > mgmntCalls;
 
@@ -150,8 +231,13 @@ void worker() {
 				output = A2S_API_VERSION;
 				break;
 			}
-				//TCP
 			case 3:
+			{
+				output = to_string(maxLen);
+				break;
+			}
+				//TCP
+			case 13:
 			{
 				if (length < 3){
 					output = "TCP calls requires at least 3 arguments. You tried: '" + input + "'";
@@ -250,7 +336,7 @@ void worker() {
 
 			}
 			// UDP
-			case 4:
+			case 14:
 			{
 				if (length < 3){
 					output = "TCP calls requires at least 3 arguments. You tried: '" + input + "'";
@@ -283,7 +369,7 @@ void worker() {
 						break;
 					}
 					else{
-						output = UDPNew(vect);
+						output = UDPSend(vect);
 					}
 
 
@@ -450,85 +536,7 @@ std::vector<std::string> split(const std::string &s, char delim) {
 //			char *output: pointer to output character array
 //			int outputSize: maximum output length
 //			const char *function: string input from arma
-void __stdcall RVExtension(char *output, int outputSize, const char *function)
-{
-	maxLen = outputSize;
-	std::string str(function);
-	std::string v = "version";
-	std::string av = "APIVersion";
-	std::string ol = "maxLength";
-	if (str == v){
-		strncpy_s(output, outputSize, A2S_VERSION, _TRUNCATE);
-		return;
-	}
-	else if (str == av){
-		strncpy_s(output, outputSize, A2S_API_VERSION, _TRUNCATE);
-		return;
 
-	}
-	else if (str == ol){
-
-		strncpy_s(output, outputSize, std::to_string(outputSize).c_str(), _TRUNCATE);
-		return;
-
-	}
-
-
-	if (!strncmp(function, "r:", 2)) // detect checking for result
-	{
-		long int num = atol(&function[2]); // ticket number or 0
-		if (tickets.find(num) != tickets.end()) // ticket exists
-		{
-			mtx.lock();
-			if (tickets[num].ready) // result is ready
-			{
-				std::string header;
-				if (!tickets[num].isLong){
-					header = "0:";
-					std::string rtn = header + tickets[num].result;
-					strncpy_s(output, outputSize, (rtn.c_str()), _TRUNCATE);// result
-					tickets.erase(num); // get rid of the read ticket
-
-				}
-				else
-				{
-					header = "1:" +
-							 std::to_string(tickets[num].PacketCount) + A2S_DELIMINATOR +
-							 std::to_string(tickets[num].lastSent + 2) + A2S_DELIMINATOR;
-					std::string rtn = header + tickets[num].resultsArray[tickets[num].lastSent + 1].c_str();
-					strncpy_s(output, outputSize, rtn.c_str(), _TRUNCATE);// result
-					tickets[num].lastSent++;
-					if (tickets[num].lastSent >= (tickets[num].PacketCount-1)){
-						tickets.erase(num); // get rid of the read ticket
-
-					}
-				}
-				mtx.unlock();
-				return;
-			}
-			mtx.unlock();
-			strncpy_s(output, outputSize, "WAIT", _TRUNCATE);    // result is not ready
-			return;
-		}
-		strncpy_s(output, outputSize, "EMPTY", _TRUNCATE); // no such ticket
-	}
-	else if (!strncmp(function, "s:", 2)) // detect ticket submission
-	{
-		Data data; data.params = string(&function[2]); // extract params
-		mtx.lock(); tickets.insert(pair<long int, Data>(++id, data)); // add ticket to the queue
-		mtx.unlock(); if (!worker_working) // if worker thread is finished, start another one
-		{
-			worker_working = true;
-			std::thread worker(worker);
-			worker.detach(); // start parallel process
-		}
-		strncpy_s(output, outputSize, std::to_string(id).c_str(), _TRUNCATE); // ticket number
-	}
-	else
-	{
-		strncpy_s(output, outputSize, "INVALID COMMAND", _TRUNCATE); // other input
-	}
-}
 
 std::string newSocket(std::vector<std::string>& vect)
 {
@@ -538,11 +546,11 @@ std::string newSocket(std::vector<std::string>& vect)
 		if (mySockets.find(vect[2]) == mySockets.end()) {
 			scktsMtx.unlock();
 //			std::cout << "Socket Not found...creating" << std::endl;
-			std::string addrStr = "127.0.0.1:9999";
+			std::string addrStr = "";
 			int timeout;
-			int protocol;
+			int protocol = -1;
 			int iResult = loadOptions(vect[2], &addrStr, &timeout, &protocol);
-			if (iResult == 0){
+			if (iResult == 0 && protocol != -1){
 //				std::cout << timeout;
 				SocketAddress address(addrStr);
 //				std::cout << addrStr;
@@ -700,15 +708,15 @@ std::string UDPNew(std::vector<std::string>& vect)
 {
 	std::string rtn;
 	try {
-		scktsMtx.lock();
+		
 		if (myUDPSockets.find(vect[2]) == myUDPSockets.end()) {
-			scktsMtx.unlock();
+			
 			//			std::cout << "Socket Not found...creating" << std::endl;
-			std::string addrStr = "127.0.0.1:9999";
+			std::string addrStr = "";
 			int timeout;
-			int protocol;
+			int protocol = -1;
 			int iResult = loadOptions(vect[2], &addrStr, &timeout, &protocol);
-			if (iResult == 0){
+			if (iResult == 0 && protocol != -1){
 				//				std::cout << timeout;
 				SocketAddress address(addrStr);
 				//				std::cout << addrStr;
@@ -755,34 +763,48 @@ std::string UDPSend(std::vector<std::string>& vect)
 
 	int iResult = loadOptions(vect[2], &addrStr, &timeout, &protocol);
 	SocketAddress address(addrStr);
-	try{
+	if (myUDPSockets.find(vect[2]) == myUDPSockets.end()) {
+		rtn = "socket Not found";
 
-		Poco::FIFOBuffer sendData(BUFFERLEN, false);
-		sendData.copy(vect[3].c_str(), vect[3].size());
-		int iResult = myUDPSockets[vect[2]]->sendTo(vect[2].c_str(), A2S_PACKET_SIZE,address);
-		rtn = "data sent, sendBytes returned: " + std::to_string(iResult);
 	}
-	catch (Poco::Exception &e){
-		rtn = e.displayText();
-	}
+	else {
+		try{
 
-	catch (boost::program_options::validation_error &e)
-	{
-		rtn = e.what();
-	}
-	catch (...){
+			Poco::FIFOBuffer sendData(BUFFERLEN, false);
+			sendData.copy(vect[3].c_str(), vect[3].size());
+			int iResult = myUDPSockets[vect[2]]->sendTo(vect[3].c_str(), vect[3].length(), address);
+			rtn = "data sent, sendTo returned: " + std::to_string(iResult);
+		}
+		catch (Poco::Exception &e){
+			rtn = e.displayText();
+		}
 
-		rtn = "Error: an unhandled error occured";
+		catch (boost::program_options::validation_error &e)
+		{
+			rtn = e.what();
+		}
+		catch (...){
+
+			rtn = "Error: an unhandled error occured";
+		}
 	}
 	return rtn;
 }
+
 std::string UDPRecv(std::vector<std::string>& vect)
 {
 	std::string rtn;
+	std::string addrStr = "";
+	int timeout;
+	int protocol;
+
+	int iResult = loadOptions(vect[2], &addrStr, &timeout, &protocol);
+	SocketAddress address(addrStr);
+
 
 	//	std::cout << "Recieving data" << std::endl;
 	//Recieve
-	if (mySockets.find(vect[2]) == mySockets.end()) {
+	if (myUDPSockets.find(vect[2]) == myUDPSockets.end()) {
 		rtn = "socket Not found";
 
 	}
@@ -791,7 +813,7 @@ std::string UDPRecv(std::vector<std::string>& vect)
 
 			Poco::FIFOBuffer recvData(BUFFERLEN);
 
-			int iResult = mySockets[vect[2]]->receiveBytes(recvData);
+			int iResult = myUDPSockets[vect[2]]->receiveFrom(&recvData, A2S_PACKET_SIZE, address);
 			char result[A2S_PACKET_SIZE] = "";
 
 			recvData.read(result, recvData.size());
@@ -830,20 +852,20 @@ std::string UDPClose(std::vector<std::string>& vect)
 	std::string rtn;
 	//	std::cout << "closing data" << std::endl;
 	//Recieve
-	if (mySockets.find(vect[2]) == mySockets.end()) {
+	if (myUDPSockets.find(vect[2]) == myUDPSockets.end()) {
 		rtn = "socket Not found";
 
 	}
 	else {
 		try {
-			mySockets[vect[2]]->shutdown();
+			myUDPSockets[vect[2]]->close();
 			mySockets.erase(vect[2]);
 
 		}
 		catch (Poco::Exception &e)
 		{
-			mySockets[vect[2]]->close();
-			mySockets.erase(vect[2]);
+			myUDPSockets[vect[2]]->close();
+			myUDPSockets.erase(vect[2]);
 			rtn = e.displayText();
 			//			std::cout << e.displayText() << std::endl;
 
