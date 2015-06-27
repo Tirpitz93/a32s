@@ -68,7 +68,12 @@ int main()
 	std::cout << "API Version: " << output << std::endl;
 	std::cout << "============================================" << std::endl;
 	std::cout << "============================================" << std::endl;
-
+	extension(output, A2S_PACKET_SIZE, "s:udp:new:udp");
+	std::cout << "New udp socket: " << output << std::endl;
+	extension(output, A2S_PACKET_SIZE, "s:udp:send:udp:hello world 123");
+	std::cout << "UDP Send: " << output << std::endl;
+	extension(output, A2S_PACKET_SIZE, "s:udp:recv:udp");
+	std::cout << "udp:recv: " << output << std::endl;
 	while (true){
 		std::string function;
 		std::cout << "===========Please Enter API Call============" << std::endl;
