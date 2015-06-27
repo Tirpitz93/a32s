@@ -413,7 +413,7 @@ void worker() {
 						output = "recieve requires at least 2 arguments. You tried: '" + input + "'";
 						break;
 					}
-
+					output = UDPClose(vect);
 
 					break;
 				}
@@ -811,13 +811,11 @@ std::string UDPRecv(std::vector<std::string>& vect)
 	else {
 		try {
 
-			Poco::FIFOBuffer recvData(BUFFERLEN);
+			char recvData[BUFFERLEN];
 
-			int iResult = myUDPSockets[vect[2]]->receiveFrom(&recvData, A2S_PACKET_SIZE, address);
-			char result[A2S_PACKET_SIZE] = "";
-
-			recvData.read(result, recvData.size());
-			rtn = result;
+			int iResult = myUDPSockets[vect[2]]->receiveFrom(&recvData, sizeof(recvData)-1, address);
+			
+			rtn = recvData;
 
 
 		}
@@ -860,6 +858,7 @@ std::string UDPClose(std::vector<std::string>& vect)
 		try {
 			myUDPSockets[vect[2]]->close();
 			mySockets.erase(vect[2]);
+			rtn = "Socket succesfully closed";
 
 		}
 		catch (Poco::Exception &e)
